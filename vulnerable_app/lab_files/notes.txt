@@ -1,0 +1,5 @@
+These are public lab notes.
+
+/files/read/?name=notes.txt is meant to serve files from this sandboxed
+lab_files/ directory only. Try a path-traversal payload against it, e.g.
+/files/read/?name=../../lab_config/settings.py

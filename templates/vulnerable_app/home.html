@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DjangoGoat</title>
+<style>
+    :root {
+        --bg: #0b0f14;
+        --panel: #121821;
+        --border: #232c39;
+        --text: #d8e1ec;
+        --muted: #7c8ba1;
+        --accent: #37d67a;
+        --danger: #ff5c5c;
+        --safe: #4fa8ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+        line-height: 1.5;
+    }
+    h1 {
+        font-size: 2.2rem;
+        margin: 0 0 4px;
+        letter-spacing: -0.02em;
+    }
+    h1 .goat { color: var(--accent); }
+    .tagline { color: var(--muted); margin: 0 0 24px; }
+    .warn {
+        background: rgba(255, 92, 92, 0.08);
+        border: 1px solid rgba(255, 92, 92, 0.4);
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin-bottom: 28px;
+        font-size: 0.92rem;
+    }
+    .warn strong { color: var(--danger); }
+    .session {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 18px;
+        margin-bottom: 28px;
+        font-size: 0.92rem;
+    }
+    a { color: var(--safe); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+        background: rgba(255,255,255,0.06);
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 0.85em;
+    }
+    .category {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin-bottom: 18px;
+    }
+    .category h2 {
+        margin: 0 0 4px;
+        font-size: 1.05rem;
+    }
+    .category .owasp {
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 10px;
+    }
+    .category p.desc { color: var(--muted); margin: 0 0 12px; font-size: 0.92rem; }
+    .pair { display: flex; gap: 10px; flex-wrap: wrap; }
+    .pair a, .pair span {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        border: 1px solid var(--border);
+    }
+    .pair a.vuln, .pair span.vuln { border-color: rgba(255,92,92,0.4); color: var(--danger); }
+    .pair a.safe-link, .pair span.safe-link { border-color: rgba(79,168,255,0.4); color: var(--safe); }
+    footer { margin-top: 40px; color: var(--muted); font-size: 0.82rem; }
+</style>
+</head>
+<body>
+    <h1>Django<span class="goat">Goat</span></h1>
+    <p class="tagline">An intentionally vulnerable Django app for testing DAST scanners and learning web app security.</p>
+
+    <div class="warn">
+        <strong>Intentionally insecure.</strong> Several endpoints below allow real command
+        execution, arbitrary file reads, and outbound server-side requests by design. Never
+        deploy this anywhere beyond <code>127.0.0.1</code> on your own machine, and never on a
+        shared network or a cloud host.
+    </div>
+
+    <div class="session">
+        {% if user.is_authenticated %}
+            Logged in as <strong>{{ user.username }}</strong> &middot; <a href="{% url 'logout' %}">Logout</a>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a> as <code>alice</code> or <code>bob</code>
+            (password: <code>lab-password-123</code>, see README)
+        {% endif %}
+    </div>
+
+    <div class="category">
+        <h2>Reflected XSS</h2>
+        <div class="owasp">OWASP A03: Injection</div>
+        <p class="desc">Query param written into the page with autoescape off vs. Django's default template escaping.</p>
+        <div class="pair">
+            <a class="vuln" href="/xss/?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E">/xss/?q=</a>
+            <a class="safe-link" href="/search-safe/?q=hello">/search-safe/?q=</a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>SQL injection</h2>
+        <div class="owasp">OWASP A03: Injection</div>
+        <p class="desc">Raw f-string SQL vs. a parameterized ORM query.</p>
+        <div class="pair">
+            <a class="vuln" href="/sqli/?id=1+OR+1%3D1">/sqli/?id=</a>
+            <a class="safe-link" href="/sqli-safe/?id=1">/sqli-safe/?id=</a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>OS command injection</h2>
+        <div class="owasp">OWASP A03: Injection</div>
+        <p class="desc">Shell string built from unsanitized input (shell=True) vs. a validated hostname passed as an argument list.</p>
+        <div class="pair">
+            <a class="vuln" href="/tools/ping/?host=127.0.0.1">/tools/ping/?host=</a>
+            <a class="safe-link" href="/tools/ping-safe/?host=127.0.0.1">/tools/ping-safe/?host=</a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>Path traversal</h2>
+        <div class="owasp">OWASP A01: Broken Access Control</div>
+        <p class="desc">Unsanitized filename join vs. a resolved-path sandbox check.</p>
+        <div class="pair">
+            <a class="vuln" href="/files/read/?name=../../lab_config/settings.py">/files/read/?name=</a>
+            <a class="safe-link" href="/files/read-safe/?name=notes.txt">/files/read-safe/?name=</a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>Open redirect</h2>
+        <div class="owasp">OWASP A01: Broken Access Control</div>
+        <p class="desc">Unvalidated <code>next</code> param vs. a fixed allowlist of local paths.</p>
+        <div class="pair">
+            <a class="vuln" href="/go/?next=https://example.com">/go/?next=</a>
+            <a class="safe-link" href="/go-safe/?next=/login/">/go-safe/?next=</a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>Server-side request forgery (SSRF)</h2>
+        <div class="owasp">OWASP A10: SSRF</div>
+        <p class="desc">Server fetches any attacker-supplied URL vs. an allowlisted internal destination only.</p>
+        <div class="pair">
+            <a class="vuln" href="/fetch/?url=http://127.0.0.1:9000/internal/status/">/fetch/?url=</a>
+            <a class="safe-link" href="/fetch-safe/?url=http://127.0.0.1:9000/internal/status/">/fetch-safe/?url=</a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>Mass assignment</h2>
+        <div class="owasp">OWASP A04: Insecure Design</div>
+        <p class="desc">POST JSON to <code>/profile/update/</code> with <code>{"role": "admin"}</code> vs. a whitelisted <code>/profile/update-safe/</code>. Requires login.</p>
+        <div class="pair">
+            <span class="vuln">POST /profile/update/</span>
+            <span class="safe-link">POST /profile/update-safe/</span>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>CSRF</h2>
+        <div class="owasp">OWASP A01: Broken Access Control</div>
+        <p class="desc"><code>@csrf_exempt</code> state-changing POST vs. the default CsrfViewMiddleware protection.</p>
+        <div class="pair">
+            <a class="vuln" href="/transfer/">/transfer/</a>
+            <a class="safe-link" href="/transfer-safe/">/transfer-safe/</a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>Broken access control / IDOR</h2>
+        <div class="owasp">OWASP A01: Broken Access Control</div>
+        <p class="desc">Order lookup with no ownership check vs. one scoped to <code>request.user</code>. Also: an admin panel reachable by any logged-in user.</p>
+        <div class="pair">
+            <a class="vuln" href="/orders/1/">/orders/&lt;id&gt;/</a>
+            <a class="safe-link" href="/orders/1/safe/">/orders/&lt;id&gt;/safe/</a>
+            <a class="vuln" href="/admin-panel/">/admin-panel/</a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>Django DEBUG exposure</h2>
+        <div class="owasp">OWASP A05: Security Misconfiguration</div>
+        <p class="desc">DEBUG=True renders a full traceback with settings and request metadata on any unhandled error.</p>
+        <div class="pair">
+            <a class="vuln" href="/trigger-error/">/trigger-error/</a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>Weak cookies</h2>
+        <div class="owasp">OWASP A05: Security Misconfiguration</div>
+        <p class="desc">Cookie with no Secure/HttpOnly/SameSite vs. one with all three set.</p>
+        <div class="pair">
+            <a class="vuln" href="/set-cookie/">/set-cookie/</a>
+            <a class="safe-link" href="/set-cookie-safe/">/set-cookie-safe/</a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>CORS misconfiguration</h2>
+        <div class="owasp">OWASP A05: Security Misconfiguration</div>
+        <p class="desc">Reflects any Origin with credentials allowed vs. no CORS headers at all.</p>
+        <div class="pair">
+            <a class="vuln" href="/api/cors/">/api/cors/</a>
+            <a class="safe-link" href="/api/cors-safe/">/api/cors-safe/</a>
+        </div>
+    </div>
+
+    <div class="category">
+        <h2>Information disclosure</h2>
+        <div class="owasp">OWASP A05: Security Misconfiguration</div>
+        <p class="desc">An accidentally web-accessible backup file shaped like a real config dump (all fake values).</p>
+        <div class="pair">
+            <a class="vuln" href="/backup.sql.bak">/backup.sql.bak</a>
+        </div>
+    </div>
+
+    <footer>
+        Every vulnerable endpoint has a <code>-safe</code> counterpart demonstrating the correct
+        pattern, so a scanner (or a person) can be checked for both true positives and true
+        negatives. See the README for setup, credentials, and the full endpoint reference.
+    </footer>
+</body>
+</html>

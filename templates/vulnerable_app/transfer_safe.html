@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Transfer (CSRF-protected)</title></head>
+<body style="font-family: sans-serif; max-width: 480px; margin: 60px auto;">
+    <h1>Transfer funds (safe)</h1>
+    <form method="post" action="/transfer-safe/">
+        {% csrf_token %}
+        <p><label>Note <input type="text" name="note"></label></p>
+        <button type="submit">Transfer</button>
+    </form>
+    <p><a href="/">Back home</a></p>
+</body>
+</html>

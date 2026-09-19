@@ -1,0 +1,36 @@
+from django.urls import path
+
+from . import views
+
+urlpatterns = [
+    path("", views.home, name="home"),
+    path("login/", views.login_view, name="login"),
+    path("logout/", views.logout_view, name="logout"),
+    path("whoami/", views.whoami, name="whoami"),
+    path("xss/", views.xss_vulnerable, name="xss_vulnerable"),
+    path("search-safe/", views.xss_safe, name="xss_safe"),
+    path("sqli/", views.sqli_vulnerable, name="sqli_vulnerable"),
+    path("sqli-safe/", views.sqli_safe, name="sqli_safe"),
+    path("transfer/", views.transfer_vulnerable, name="transfer_vulnerable"),
+    path("transfer-safe/", views.transfer_safe, name="transfer_safe"),
+    path("orders/<int:order_id>/", views.order_detail_vulnerable, name="order_detail_vulnerable"),
+    path("orders/<int:order_id>/safe/", views.order_detail_safe, name="order_detail_safe"),
+    path("admin-panel/", views.admin_panel_vulnerable, name="admin_panel_vulnerable"),
+    path("trigger-error/", views.trigger_error, name="trigger_error"),
+    path("set-cookie/", views.set_cookie_vulnerable, name="set_cookie_vulnerable"),
+    path("set-cookie-safe/", views.set_cookie_safe, name="set_cookie_safe"),
+    path("api/cors/", views.cors_vulnerable, name="cors_vulnerable"),
+    path("api/cors-safe/", views.cors_safe, name="cors_safe"),
+    path("backup.sql.bak", views.backup_file, name="backup_file"),
+    path("files/read/", views.file_read_vulnerable, name="file_read_vulnerable"),
+    path("files/read-safe/", views.file_read_safe, name="file_read_safe"),
+    path("tools/ping/", views.ping_vulnerable, name="ping_vulnerable"),
+    path("tools/ping-safe/", views.ping_safe, name="ping_safe"),
+    path("go/", views.redirect_vulnerable, name="redirect_vulnerable"),
+    path("go-safe/", views.redirect_safe, name="redirect_safe"),
+    path("internal/status/", views.internal_status, name="internal_status"),
+    path("fetch/", views.fetch_vulnerable, name="fetch_vulnerable"),
+    path("fetch-safe/", views.fetch_safe, name="fetch_safe"),
+    path("profile/update/", views.profile_update_vulnerable, name="profile_update_vulnerable"),
+    path("profile/update-safe/", views.profile_update_safe, name="profile_update_safe"),
+]

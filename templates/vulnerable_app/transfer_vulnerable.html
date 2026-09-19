@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Transfer (CSRF-exempt)</title></head>
+<body style="font-family: sans-serif; max-width: 480px; margin: 60px auto;">
+    <h1>Transfer funds (vulnerable)</h1>
+    <p>This form has no CSRF token and the view is <code>@csrf_exempt</code>.</p>
+    <form method="post" action="/transfer/">
+        <p><label>Note <input type="text" name="note"></label></p>
+        <button type="submit">Transfer</button>
+    </form>
+    <p><a href="/">Back home</a></p>
+</body>
+</html>
