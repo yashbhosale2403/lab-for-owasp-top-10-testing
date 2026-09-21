@@ -21,6 +21,40 @@ broader set of vulnerability categories and a realistic storefront UI.
 affiliated with, endorsed by, or representative of any real retailer or
 hardware maker. All product names, specs, and prices are made up.
 
+## Screenshots
+
+**Storefront**
+
+| Home | Support tools |
+|---|---|
+| ![Home page](docs/screenshots/01-home.png) | ![Support tools](docs/screenshots/02-support.png) |
+
+**"Track your order" — the SQL injection live, through the actual UI** (`1 OR 1=1` returns every customer's order, not just one):
+
+![Track order SQL injection](docs/screenshots/03-track-order.png)
+
+**`/challenges/` — the tester-facing endpoint index**, linked from the footer as "For Security Testers":
+
+![Challenges index](docs/screenshots/05-challenges.png)
+
+**Sign in**:
+
+![Sign in](docs/screenshots/04-login.png)
+
+**Vulnerabilities in action (raw endpoint responses)**
+
+| SQL injection — `GET /sqli/?id=1 OR 1=1` | OS command injection — `GET /tools/ping/?host=127.0.0.1 & echo INJECTED_MARKER` |
+|---|---|
+| ![SQLi raw response](docs/screenshots/06-endpoint-sqli.png) | ![Command injection raw response](docs/screenshots/07-endpoint-ping.png) |
+
+**Path traversal — `GET /files/read/?name=../../lab_config/settings.py`** (escapes the `lab_files/` sandbox and reads the app's own settings module):
+
+![Path traversal raw response](docs/screenshots/08-endpoint-traversal.png)
+
+**Information disclosure — `GET /backup.sql.bak`**:
+
+![Backup file raw response](docs/screenshots/09-endpoint-backup.png)
+
 ## Where the vulnerabilities live in the storefront
 
 | Storefront feature | Vulnerability | Backend endpoint |
