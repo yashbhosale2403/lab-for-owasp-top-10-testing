@@ -1,0 +1,8 @@
+Vortex RTX Graphics Card -- Spec Sheet
+-----------------------------------------
+Memory: 12GB GDDR6X
+Boost Clock: 2.55GHz
+Bus: PCIe 4.0 x16
+Power: 285W, 3x 8-pin required
+Outputs: 3x DisplayPort, 1x HDMI
+Price: $799

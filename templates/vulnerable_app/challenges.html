@@ -1,0 +1,187 @@
+{% extends "vulnerable_app/base.html" %}
+{% block title %}For Security Testers &mdash; ByteForge{% endblock %}
+{% block content %}
+<style>
+    .category { margin-bottom: 16px; }
+    .category .owasp { color: var(--muted); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .category p.desc { color: var(--muted); margin: 0 0 12px; font-size: 0.9rem; }
+    .pair { display: flex; gap: 10px; flex-wrap: wrap; }
+    .pair a, .pair span {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        border: 1px solid var(--border);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .pair a.vuln, .pair span.vuln { border-color: rgba(226,35,26,0.35); color: var(--red-dark); }
+    .pair a.safe-link, .pair span.safe-link { border-color: rgba(26,127,78,0.35); color: var(--ok); }
+</style>
+
+<h1>For security testers</h1>
+<p class="lede">
+    ByteForge is the storefront skin over <strong>DjangoGoat</strong>, an intentionally vulnerable
+    Django app. Every category below is reachable through the normal storefront flow (search,
+    order tracking, account settings, support tools) as well as directly by URL. Every vulnerable
+    endpoint has a <code>-safe</code> counterpart for true-negative testing.
+</p>
+
+<div class="card">
+    <div class="category">
+        <h2>Reflected XSS</h2>
+        <div class="owasp">OWASP A03: Injection &middot; via the nav search bar</div>
+        <p class="desc">Query param written into the page with autoescape off vs. Django's default template escaping.</p>
+        <div class="pair">
+            <a class="vuln" href="/xss/?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E">/xss/?q=</a>
+            <a class="safe-link" href="/search-safe/?q=hello">/search-safe/?q=</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="category">
+        <h2>SQL injection</h2>
+        <div class="owasp">OWASP A03: Injection &middot; via /track-order/</div>
+        <p class="desc">Raw f-string SQL vs. a parameterized ORM query.</p>
+        <div class="pair">
+            <a class="vuln" href="/sqli/?id=1+OR+1%3D1">/sqli/?id=</a>
+            <a class="safe-link" href="/sqli-safe/?id=1">/sqli-safe/?id=</a>
+            <a class="vuln" href="/track-order/?order_id=1+OR+1%3D1">/track-order/?order_id=</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="category">
+        <h2>OS command injection</h2>
+        <div class="owasp">OWASP A03: Injection &middot; via /support/ diagnostics tool</div>
+        <p class="desc">Shell string built from unsanitized input (shell=True) vs. a validated hostname passed as an argument list.</p>
+        <div class="pair">
+            <a class="vuln" href="/tools/ping/?host=127.0.0.1">/tools/ping/?host=</a>
+            <a class="safe-link" href="/tools/ping-safe/?host=127.0.0.1">/tools/ping-safe/?host=</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="category">
+        <h2>Path traversal</h2>
+        <div class="owasp">OWASP A01: Broken Access Control &middot; via product "Download Spec Sheet"</div>
+        <p class="desc">Unsanitized filename join vs. a resolved-path sandbox check.</p>
+        <div class="pair">
+            <a class="vuln" href="/files/read/?name=../../lab_config/settings.py">/files/read/?name=</a>
+            <a class="safe-link" href="/files/read-safe/?name=notes.txt">/files/read-safe/?name=</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="category">
+        <h2>Open redirect</h2>
+        <div class="owasp">OWASP A01: Broken Access Control &middot; via /support/ partner deals link</div>
+        <p class="desc">Unvalidated <code>next</code> param vs. a fixed allowlist of local paths.</p>
+        <div class="pair">
+            <a class="vuln" href="/go/?next=https://example.com">/go/?next=</a>
+            <a class="safe-link" href="/go-safe/?next=/login/">/go-safe/?next=</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="category">
+        <h2>Server-side request forgery (SSRF)</h2>
+        <div class="owasp">OWASP A10: SSRF &middot; via /support/ compatibility checker</div>
+        <p class="desc">Server fetches any attacker-supplied URL vs. an allowlisted internal destination only.</p>
+        <div class="pair">
+            <a class="vuln" href="/fetch/?url=http://127.0.0.1:9000/internal/status/">/fetch/?url=</a>
+            <a class="safe-link" href="/fetch-safe/?url=http://127.0.0.1:9000/internal/status/">/fetch-safe/?url=</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="category">
+        <h2>Mass assignment</h2>
+        <div class="owasp">OWASP A04: Insecure Design &middot; via /account/settings/</div>
+        <p class="desc">A hidden <code>role</code> form field is applied with no whitelist &mdash; tamper with it and re-submit. JSON API equivalent: <code>POST /profile/update/</code> with <code>{"role": "admin"}</code> vs. the whitelisted <code>/profile/update-safe/</code>.</p>
+        <div class="pair">
+            <span class="vuln">POST /account/settings/</span>
+            <span class="vuln">POST /profile/update/</span>
+            <span class="safe-link">POST /profile/update-safe/</span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="category">
+        <h2>CSRF</h2>
+        <div class="owasp">OWASP A01: Broken Access Control</div>
+        <p class="desc"><code>@csrf_exempt</code> state-changing POST vs. the default CsrfViewMiddleware protection.</p>
+        <div class="pair">
+            <a class="vuln" href="/transfer/">/transfer/</a>
+            <a class="safe-link" href="/transfer-safe/">/transfer-safe/</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="category">
+        <h2>Broken access control / IDOR</h2>
+        <div class="owasp">OWASP A01: Broken Access Control &middot; via /account/orders/</div>
+        <p class="desc">Order lookup with no ownership check vs. one scoped to <code>request.user</code>. Also: an "Employee Portal" reachable by any logged-in user.</p>
+        <div class="pair">
+            <a class="vuln" href="/orders/1/">/orders/&lt;id&gt;/</a>
+            <a class="safe-link" href="/orders/1/safe/">/orders/&lt;id&gt;/safe/</a>
+            <a class="vuln" href="/admin-panel/">/admin-panel/</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="category">
+        <h2>Django DEBUG exposure</h2>
+        <div class="owasp">OWASP A05: Security Misconfiguration &middot; via footer "Report a Site Issue"</div>
+        <p class="desc">DEBUG=True renders a full traceback with settings and request metadata on any unhandled error.</p>
+        <div class="pair">
+            <a class="vuln" href="/trigger-error/">/trigger-error/</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="category">
+        <h2>Weak cookies</h2>
+        <div class="owasp">OWASP A05: Security Misconfiguration</div>
+        <p class="desc">Cookie with no Secure/HttpOnly/SameSite vs. one with all three set.</p>
+        <div class="pair">
+            <a class="vuln" href="/set-cookie/">/set-cookie/</a>
+            <a class="safe-link" href="/set-cookie-safe/">/set-cookie-safe/</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="category">
+        <h2>CORS misconfiguration</h2>
+        <div class="owasp">OWASP A05: Security Misconfiguration &middot; the "price check" partner API</div>
+        <p class="desc">Reflects any Origin with credentials allowed vs. no CORS headers at all.</p>
+        <div class="pair">
+            <a class="vuln" href="/api/cors/">/api/cors/</a>
+            <a class="safe-link" href="/api/cors-safe/">/api/cors-safe/</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="category">
+        <h2>Information disclosure</h2>
+        <div class="owasp">OWASP A05: Security Misconfiguration &middot; linked from /robots.txt</div>
+        <p class="desc">An accidentally web-accessible backup file shaped like a real config dump (all fake values).</p>
+        <div class="pair">
+            <a class="vuln" href="/backup.sql.bak">/backup.sql.bak</a>
+        </div>
+    </div>
+</div>
+
+<p class="lede">Seeded accounts: <code>alice</code> / <code>bob</code>, password <code>lab-password-123</code>. Full endpoint reference and setup instructions are in the README.</p>
+{% endblock %}

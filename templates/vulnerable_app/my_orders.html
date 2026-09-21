@@ -1,0 +1,31 @@
+{% extends "vulnerable_app/base.html" %}
+{% block title %}My Orders &mdash; ByteForge{% endblock %}
+{% block content %}
+<h1>My orders</h1>
+<p class="lede">Signed in as {{ user.username }}.</p>
+
+<div class="card">
+    {% if orders %}
+    <table>
+        <tr><th>Order #</th><th>Item</th><th>Amount</th><th></th></tr>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.item_name }}</td>
+            <td>${{ order.amount }}</td>
+            <td><a class="btn ghost" style="padding:6px 12px;font-size:0.78rem;" href="{% url 'order_detail_vulnerable' order.id %}">View details</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p class="lede">You don't have any orders yet.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Look up an order by number</h2>
+    <p class="lede">Have an order number from an email or receipt? Order detail pages are linked directly by number, e.g. <code>/orders/1/</code>, <code>/orders/2/</code> &mdash; try changing the number in the URL bar.</p>
+    <a class="btn ghost" href="{% url 'order_detail_vulnerable' 1 %}">View order #1</a>
+    <a class="btn ghost" href="{% url 'order_detail_vulnerable' 2 %}">View order #2</a>
+</div>
+{% endblock %}

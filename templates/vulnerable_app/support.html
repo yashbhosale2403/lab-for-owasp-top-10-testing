@@ -1,0 +1,42 @@
+{% extends "vulnerable_app/base.html" %}
+{% block title %}Support &mdash; ByteForge{% endblock %}
+{% block content %}
+<h1>Support tools</h1>
+<p class="lede">A few self-service tools before you order or open a ticket.</p>
+
+<div class="card">
+    <h2>Network diagnostics</h2>
+    <p class="lede">Check connectivity to our regional warehouse before you place an order.</p>
+    <form method="get" action="{% url 'ping_vulnerable' %}">
+        <div class="field">
+            <label for="host">Warehouse host</label>
+            <input type="text" id="host" name="host" value="127.0.0.1">
+        </div>
+        <button class="btn" type="submit">Run diagnostics</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Build compatibility check</h2>
+    <p class="lede">Paste a link to your current build (e.g. from a parts-list tool) and we'll check compatibility against our catalog.</p>
+    <form method="get" action="{% url 'fetch_vulnerable' %}">
+        <div class="field">
+            <label for="url">Build list URL</label>
+            <input type="text" id="url" name="url" value="http://127.0.0.1:9000/internal/status/">
+        </div>
+        <button class="btn" type="submit">Check compatibility</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Partner deals</h2>
+    <p class="lede">Head over to this week's partner promotion.</p>
+    <a class="btn secondary" href="{% url 'redirect_vulnerable' %}?next=https://example.com/deals">Visit partner deals</a>
+</div>
+
+<div class="card">
+    <h2>Report a site issue</h2>
+    <p class="lede">Something broken? Let us know and we'll generate a diagnostic report.</p>
+    <a class="btn ghost" href="{% url 'trigger_error' %}">Report an issue</a>
+</div>
+{% endblock %}

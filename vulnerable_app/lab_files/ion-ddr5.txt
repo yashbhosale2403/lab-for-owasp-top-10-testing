@@ -1,0 +1,8 @@
+Ion 32GB DDR5 RAM Kit -- Spec Sheet
+--------------------------------------
+Capacity: 32GB (2x16GB)
+Speed: 6000MT/s
+Latency: CL30
+Voltage: 1.35V
+Heat spreader: aluminum, low profile
+Price: $159

@@ -1,0 +1,9 @@
+ByteForge 14 Ultraslim -- Spec Sheet
+------------------------------------
+CPU: ForgeCore 7 (8-core, up to 4.6GHz)
+RAM: 16GB LPDDR5
+Storage: 512GB NVMe SSD
+Display: 14" 2.8K OLED, 400 nits
+Battery: up to 16 hours
+Weight: 1.19kg
+Price: $1,099

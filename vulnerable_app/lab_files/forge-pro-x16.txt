@@ -1,0 +1,10 @@
+ByteForge Pro X16 -- Spec Sheet
+--------------------------------
+CPU: ForgeCore 9 HX (16-core, up to 5.4GHz)
+GPU: Vortex RTX 4070 Mobile, 8GB
+RAM: 32GB DDR5
+Storage: 1TB NVMe SSD
+Display: 16" QHD+ 240Hz
+Battery: up to 8 hours
+Weight: 2.3kg
+Price: $1,899

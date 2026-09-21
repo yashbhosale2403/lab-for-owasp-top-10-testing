@@ -1,0 +1,23 @@
+{% extends "vulnerable_app/base.html" %}
+{% block title %}Account Settings &mdash; ByteForge{% endblock %}
+{% block content %}
+<h1>Account settings</h1>
+<p class="lede">Signed in as {{ user.username }} &middot; role: <code>{{ profile.role }}</code></p>
+
+{% if saved %}
+<div class="flash ok">Profile updated.</div>
+{% endif %}
+
+<div class="card">
+    <form method="post" action="{% url 'account_settings_page' %}">
+        {% csrf_token %}
+        <div class="field">
+            <label for="bio">Display bio</label>
+            <input type="text" id="bio" name="bio" value="{{ profile.bio }}" maxlength="200">
+        </div>
+        <!-- Internal use: account tier, not shown in the UI -->
+        <input type="hidden" name="role" value="{{ profile.role }}">
+        <button class="btn" type="submit">Save changes</button>
+    </form>
+</div>
+{% endblock %}

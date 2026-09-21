@@ -1,13 +1,15 @@
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>Transfer (CSRF-exempt)</title></head>
-<body style="font-family: sans-serif; max-width: 480px; margin: 60px auto;">
-    <h1>Transfer funds (vulnerable)</h1>
-    <p>This form has no CSRF token and the view is <code>@csrf_exempt</code>.</p>
-    <form method="post" action="/transfer/">
-        <p><label>Note <input type="text" name="note"></label></p>
-        <button type="submit">Transfer</button>
+{% extends "vulnerable_app/base.html" %}
+{% block title %}Redeem Gift Card &mdash; ByteForge{% endblock %}
+{% block content %}
+<h1>Redeem a gift card</h1>
+<p class="lede">Enter your gift card note or message to apply it to your account.</p>
+<div class="card" style="max-width: 420px;">
+    <form method="post" action="{% url 'transfer_vulnerable' %}">
+        <div class="field">
+            <label for="note">Gift card note</label>
+            <input type="text" id="note" name="note">
+        </div>
+        <button class="btn" type="submit">Redeem</button>
     </form>
-    <p><a href="/">Back home</a></p>
-</body>
-</html>
+</div>
+{% endblock %}

@@ -4,6 +4,12 @@ from . import views
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("challenges/", views.challenges, name="challenges"),
+    path("track-order/", views.track_order_page, name="track_order_page"),
+    path("support/", views.support_page, name="support_page"),
+    path("account/settings/", views.account_settings_page, name="account_settings_page"),
+    path("account/orders/", views.my_orders_page, name="my_orders_page"),
+    path("robots.txt", views.robots_txt, name="robots_txt"),
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
     path("whoami/", views.whoami, name="whoami"),

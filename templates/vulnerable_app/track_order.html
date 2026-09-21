@@ -1,0 +1,36 @@
+{% extends "vulnerable_app/base.html" %}
+{% block title %}Track Order &mdash; ByteForge{% endblock %}
+{% block content %}
+<h1>Track your order</h1>
+<p class="lede">Enter your order number below &mdash; no account needed.</p>
+
+<div class="card">
+    <form method="get" action="{% url 'track_order_page' %}">
+        <div class="field">
+            <label for="order_id">Order number</label>
+            <input type="text" id="order_id" name="order_id" placeholder="e.g. 1" value="{{ order_id|default:'' }}">
+        </div>
+        <button class="btn" type="submit">Track order</button>
+    </form>
+</div>
+
+{% if error %}
+<div class="flash err">{{ error }}</div>
+{% endif %}
+
+{% if results is not None %}
+<div class="card">
+    <h2>Results</h2>
+    {% if results %}
+    <table>
+        <tr><th>Order #</th><th>Item</th><th>Amount</th></tr>
+        {% for row in results %}
+        <tr><td>{{ row.0 }}</td><td>{{ row.1 }}</td><td>${{ row.2 }}</td></tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p class="lede">No order found with that number.</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

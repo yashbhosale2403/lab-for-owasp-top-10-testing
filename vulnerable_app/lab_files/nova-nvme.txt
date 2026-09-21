@@ -1,0 +1,8 @@
+Nova NVMe 2TB SSD -- Spec Sheet
+----------------------------------
+Capacity: 2TB
+Interface: PCIe 4.0 x4, NVMe 1.4
+Sequential Read: 7,300 MB/s
+Sequential Write: 6,600 MB/s
+Endurance: 1,200 TBW
+Price: $189

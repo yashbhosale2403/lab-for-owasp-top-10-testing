@@ -28,9 +28,55 @@ from .models import Order, Profile
 
 LAB_FILES_DIR = Path(__file__).resolve().parent / "lab_files"
 
+LAPTOPS = [
+    {
+        "name": "ByteForge 14 Ultraslim",
+        "desc": '8-core, 16GB RAM, 512GB SSD, 14" 2.8K OLED.',
+        "price": "1,099",
+        "spec_file": "forge-14-ultraslim.txt",
+    },
+    {
+        "name": "ByteForge Pro X16",
+        "desc": '16-core, Vortex RTX 4070, 32GB RAM, 16" QHD+ 240Hz.',
+        "price": "1,899",
+        "spec_file": "forge-pro-x16.txt",
+    },
+    {
+        "name": "ByteForge Edge Business 13",
+        "desc": "6-core, 16GB RAM, fingerprint reader, TPM 2.0.",
+        "price": "949",
+        "spec_file": "forge-edge-13.txt",
+    },
+]
+
+PARTS = [
+    {
+        "name": "Vortex RTX Graphics Card",
+        "desc": "12GB GDDR6X, 2.55GHz boost, PCIe 4.0.",
+        "price": "799",
+        "spec_file": "vortex-rtx.txt",
+    },
+    {
+        "name": "Ion 32GB DDR5 RAM Kit",
+        "desc": "2x16GB, 6000MT/s, CL30, low profile.",
+        "price": "159",
+        "spec_file": "ion-ddr5.txt",
+    },
+    {
+        "name": "Nova NVMe 2TB SSD",
+        "desc": "PCIe 4.0, 7,300 MB/s read, 1,200 TBW.",
+        "price": "189",
+        "spec_file": "nova-nvme.txt",
+    },
+]
+
 
 def home(request):
-    return render(request, "vulnerable_app/home.html")
+    return render(request, "vulnerable_app/home.html", {"laptops": LAPTOPS, "parts": PARTS})
+
+
+def challenges(request):
+    return render(request, "vulnerable_app/challenges.html")
 
 
 def login_view(request):
@@ -57,16 +103,10 @@ def logout_view(request):
 
 
 def xss_vulnerable(request):
-    """VULNERABLE: the query param is written into the page with autoescape
-    off, so <script> etc. is reflected verbatim."""
+    """VULNERABLE: the query param is rendered with autoescape explicitly
+    turned off, so <script> etc. is reflected verbatim."""
     query = request.GET.get("q", "")
-    html = f"""
-    <html><body>
-        <h1>Search results</h1>
-        <p>You searched for: {query}</p>
-    </body></html>
-    """
-    return HttpResponse(html)
+    return render(request, "vulnerable_app/search_results.html", {"query": query})
 
 
 def xss_safe(request):
@@ -80,20 +120,27 @@ def xss_safe(request):
 # ---------------------------------------------------------------------------
 
 
-def sqli_vulnerable(request):
-    """VULNERABLE: builds a raw SQL string via f-string interpolation.
-    A payload like `1 OR 1=1` returns every order; a syntax-breaking payload
-    like `1'` triggers a visible SQLite error -- both are what
-    DjangoShield's SQLi detector should key off.
-    """
-    order_id = request.GET.get("id", "1")
+def _execute_order_lookup(order_id: str) -> tuple[str, list]:
+    """The vulnerable core shared by the JSON SQLi endpoint and the
+    storefront's "Track your order" page: builds a raw SQL string via
+    f-string interpolation with no parameterization. Raises whatever
+    exception the database driver raises on a malformed/injected query."""
     with connection.cursor() as cursor:
         query = f"SELECT id, item_name, amount FROM vulnerable_app_order WHERE id = {order_id}"
-        try:
-            cursor.execute(query)
-            rows = cursor.fetchall()
-        except Exception as exc:  # intentionally broad: we want the raw DB error surfaced
-            return HttpResponse(f"Database error: {exc}", status=500)
+        cursor.execute(query)
+        rows = cursor.fetchall()
+    return query, rows
+
+
+def sqli_vulnerable(request):
+    """VULNERABLE: a payload like `1 OR 1=1` returns every order; a
+    syntax-breaking payload like `1'` triggers a visible SQLite error --
+    both are what DjangoShield's SQLi detector should key off."""
+    order_id = request.GET.get("id", "1")
+    try:
+        query, rows = _execute_order_lookup(order_id)
+    except Exception as exc:  # intentionally broad: we want the raw DB error surfaced
+        return HttpResponse(f"Database error: {exc}", status=500)
     return JsonResponse({"query": query, "results": rows})
 
 
@@ -398,6 +445,17 @@ def fetch_safe(request):
 # ---------------------------------------------------------------------------
 
 
+def _apply_profile_fields_unsafe(profile: Profile, data: dict) -> None:
+    """The vulnerable core shared by the JSON mass-assignment endpoint and
+    the storefront's account settings form: applies every field the caller
+    sent directly onto the model with no whitelist, so a client can set
+    role="admin" even though the UI only ever means to expose "bio"."""
+    for field, value in data.items():
+        if hasattr(profile, field) and field not in {"id", "user", "user_id"}:
+            setattr(profile, field, value)
+    profile.save()
+
+
 @login_required
 @csrf_exempt
 def profile_update_vulnerable(request):
@@ -411,10 +469,7 @@ def profile_update_vulnerable(request):
     except json.JSONDecodeError:
         return JsonResponse({"error": "invalid JSON"}, status=400)
     profile, _ = Profile.objects.get_or_create(user=request.user)
-    for field, value in data.items():
-        if hasattr(profile, field) and field not in {"id", "user", "user_id"}:
-            setattr(profile, field, value)
-    profile.save()
+    _apply_profile_fields_unsafe(profile, data)
     return JsonResponse({"bio": profile.bio, "role": profile.role})
 
 
@@ -434,6 +489,65 @@ def profile_update_safe(request):
         profile.bio = str(data["bio"])[:200]
         profile.save()
     return JsonResponse({"bio": profile.bio, "role": profile.role})
+
+
+# ---------------------------------------------------------------------------
+# Storefront pages: the same vulnerabilities above, reached through normal
+# shopping flows instead of direct API calls.
+# ---------------------------------------------------------------------------
+
+
+def track_order_page(request):
+    """Storefront front-end for the SQLi vulnerability: a normal-looking
+    order tracking form that feeds straight into the same unparameterized
+    query as /sqli/."""
+    order_id = request.GET.get("order_id")
+    context: dict = {"order_id": order_id}
+    if order_id is not None:
+        try:
+            _, rows = _execute_order_lookup(order_id)
+            context["results"] = rows
+        except Exception as exc:  # intentionally broad: surface the raw DB error
+            context["error"] = f"Could not look up that order: {exc}"
+    return render(request, "vulnerable_app/track_order.html", context)
+
+
+def support_page(request):
+    """Landing page for the diagnostics/compatibility/redirect tools --
+    each form here submits straight to the real vulnerable endpoint."""
+    return render(request, "vulnerable_app/support.html")
+
+
+@login_required
+def account_settings_page(request):
+    """Storefront front-end for the mass-assignment vulnerability: a normal
+    "edit your bio" form that also carries a hidden `role` field, applied
+    with the same no-whitelist logic as /profile/update/."""
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    saved = False
+    if request.method == "POST":
+        data = {"bio": request.POST.get("bio", ""), "role": request.POST.get("role", profile.role)}
+        _apply_profile_fields_unsafe(profile, data)
+        saved = True
+    return render(
+        request, "vulnerable_app/account_settings.html", {"profile": profile, "saved": saved}
+    )
+
+
+@login_required
+def my_orders_page(request):
+    """Storefront front-end for the IDOR vulnerability: an order-history
+    page that links straight to /orders/<id>/ by number."""
+    orders = Order.objects.filter(owner=request.user)
+    return render(request, "vulnerable_app/my_orders.html", {"orders": orders})
+
+
+def robots_txt(request):
+    """A realistic misconfiguration: robots.txt disallowing a path is
+    itself a hint to attackers about what's there, and doesn't stop
+    anything from actually being fetched."""
+    content = "User-agent: *\nDisallow: /backup.sql.bak\nDisallow: /admin-panel/\n"
+    return HttpResponse(content, content_type="text/plain")
 
 
 # ---------------------------------------------------------------------------

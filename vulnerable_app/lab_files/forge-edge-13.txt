@@ -1,0 +1,10 @@
+ByteForge Edge Business 13 -- Spec Sheet
+------------------------------------------
+CPU: ForgeCore 5 (6-core, up to 4.1GHz)
+RAM: 16GB LPDDR5
+Storage: 512GB NVMe SSD
+Display: 13.3" FHD, matte
+Battery: up to 14 hours
+Security: fingerprint reader, TPM 2.0
+Weight: 1.05kg
+Price: $949

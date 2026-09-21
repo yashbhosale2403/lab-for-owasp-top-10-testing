@@ -4,7 +4,7 @@
 <h1>Search results</h1>
 <p class="lede">Showing results for your search.</p>
 <div class="card">
-    <p>You searched for: {{ query }}</p>
+    <p>You searched for: {% autoescape off %}{{ query }}{% endautoescape %}</p>
     <p class="lede" style="margin-top:16px;">No products matched. Try a broader term, or browse <a href="{% url 'home' %}" style="color:var(--red);font-weight:600;">Laptops &amp; PC Parts</a>.</p>
 </div>
 {% endblock %}
