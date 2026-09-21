@@ -4,7 +4,7 @@
 <h1>Redeem a gift card</h1>
 <p class="lede">Enter your gift card note or message to apply it to your account.</p>
 <div class="card" style="max-width: 420px;">
-    <form method="post" action="{% url 'transfer_safe' %}">
+    <form method="post" action="{% url 'transfer_safe' %}" onsubmit="return submitFormViaFetch(event, 'Gift Card Redeemed')">
         {% csrf_token %}
         <div class="field">
             <label for="note">Gift card note</label>

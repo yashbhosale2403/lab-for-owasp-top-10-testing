@@ -84,7 +84,8 @@
         <div class="name">{{ p.name }}</div>
         <div class="desc">{{ p.desc }}</div>
         <div class="price">${{ p.price }}</div>
-        <a class="btn" href="{% url 'file_read_vulnerable' %}?name={{ p.spec_file }}">Download Spec Sheet</a>
+        <a class="btn" href="{% url 'file_read_vulnerable' %}?name={{ p.spec_file }}"
+           onclick="return showFetchResult(event, '{{ p.name }} — Spec Sheet', this.href)">Download Spec Sheet</a>
     </div>
     {% endfor %}
 </div>
@@ -109,7 +110,8 @@
         <div class="name">{{ p.name }}</div>
         <div class="desc">{{ p.desc }}</div>
         <div class="price">${{ p.price }}</div>
-        <a class="btn" href="{% url 'file_read_vulnerable' %}?name={{ p.spec_file }}">Download Spec Sheet</a>
+        <a class="btn" href="{% url 'file_read_vulnerable' %}?name={{ p.spec_file }}"
+           onclick="return showFetchResult(event, '{{ p.name }} — Spec Sheet', this.href)">Download Spec Sheet</a>
     </div>
     {% endfor %}
 </div>

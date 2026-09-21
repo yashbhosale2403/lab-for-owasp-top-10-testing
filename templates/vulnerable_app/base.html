@@ -171,6 +171,67 @@
     footer a { color: #b6bac2; display: block; margin-bottom: 8px; }
     footer a:hover { color: #fff; }
     footer .legal { margin-top: 30px; padding-top: 20px; border-top: 1px solid #2a2d33; color: #7d818a; font-size: 0.78rem; }
+
+    /* -- result modal ----------------------------------------------------- */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(14,15,18,0.55);
+        z-index: 1000;
+        padding: 5vh 20px;
+        overflow-y: auto;
+    }
+    .modal-overlay.open { display: block; }
+    .modal-box {
+        background: #fff;
+        max-width: 640px;
+        margin: 0 auto;
+        border-radius: 14px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+        overflow: hidden;
+        animation: modal-in 0.15s ease-out;
+    }
+    @keyframes modal-in {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 22px;
+        border-bottom: 1px solid var(--border);
+    }
+    .modal-head span { font-weight: 700; font-size: 1rem; }
+    .modal-close {
+        background: var(--paper-soft);
+        border: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        line-height: 1;
+        cursor: pointer;
+        color: var(--ink-soft);
+    }
+    .modal-close:hover { background: var(--border); }
+    .modal-body { padding: 20px 22px 24px; max-height: 62vh; overflow-y: auto; }
+    .modal-body pre { margin: 10px 0 0; white-space: pre-wrap; word-break: break-word; }
+    .modal-status {
+        display: inline-block;
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        padding: 3px 9px;
+        border-radius: 6px;
+        text-transform: uppercase;
+    }
+    .modal-status.ok { background: #eafaf1; color: var(--ok); }
+    .modal-status.err { background: #fdeeed; color: var(--red-dark); }
+    .modal-loading { color: var(--muted); font-size: 0.9rem; }
+    .modal-loading::after { content: "\2026"; }
 </style>
 {% block extra_head %}{% endblock %}
 </head>
@@ -228,7 +289,7 @@
                 </div>
                 <div>
                     <h3>Company</h3>
-                    <a href="{% url 'admin_panel_vulnerable' %}">Employee Portal</a>
+                    <a href="{% url 'admin_panel_vulnerable' %}" onclick="return showFetchResult(event, 'Employee Portal — All Orders', this.href)">Employee Portal</a>
                     <a href="{% url 'challenges' %}">For Security Testers</a>
                 </div>
             </div>
@@ -237,5 +298,87 @@
             </div>
         </div>
     </footer>
+
+    <div class="modal-overlay" id="modal-overlay" onclick="if (event.target === this) closeModal();">
+        <div class="modal-box" role="dialog" aria-modal="true">
+            <div class="modal-head">
+                <span id="modal-title"></span>
+                <button type="button" class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+    function openModal(title) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-body').innerHTML = '<p class="modal-loading">Loading</p>';
+        document.getElementById('modal-overlay').classList.add('open');
+        document.addEventListener('keydown', closeModalOnEscape);
+    }
+    function closeModal() {
+        document.getElementById('modal-overlay').classList.remove('open');
+        document.removeEventListener('keydown', closeModalOnEscape);
+    }
+    function closeModalOnEscape(e) {
+        if (e.key === 'Escape') closeModal();
+    }
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+    function getCookie(name) {
+        const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return match ? match.pop() : '';
+    }
+    function renderModalResult(status, ok, bodyText, contentType) {
+        let inner = '';
+        if (contentType && contentType.includes('application/json')) {
+            try {
+                inner = '<pre>' + escapeHtml(JSON.stringify(JSON.parse(bodyText), null, 2)) + '</pre>';
+            } catch (e) {
+                inner = '<pre>' + escapeHtml(bodyText) + '</pre>';
+            }
+        } else {
+            inner = '<pre>' + escapeHtml(bodyText) + '</pre>';
+        }
+        const badge = '<span class="modal-status ' + (ok ? 'ok' : 'err') + '">HTTP ' + status + '</span>';
+        document.getElementById('modal-body').innerHTML = badge + inner;
+    }
+    async function showFetchResult(event, title, url, options) {
+        if (event) event.preventDefault();
+        openModal(title);
+        try {
+            const res = await fetch(url, options || {});
+            const text = await res.text();
+            renderModalResult(res.status, res.ok, text, res.headers.get('content-type'));
+        } catch (err) {
+            document.getElementById('modal-body').innerHTML =
+                '<span class="modal-status err">Request failed</span><pre>' + escapeHtml(String(err)) + '</pre>';
+        }
+        return false;
+    }
+    async function submitFormViaFetch(event, title) {
+        event.preventDefault();
+        const form = event.target;
+        const url = form.action;
+        const method = (form.method || 'GET').toUpperCase();
+        let fetchUrl = url;
+        const opts = { method, headers: {} };
+        if (method === 'GET') {
+            const params = new URLSearchParams(new FormData(form));
+            fetchUrl = url + (url.includes('?') ? '&' : '?') + params.toString();
+        } else {
+            opts.body = new URLSearchParams(new FormData(form));
+            const csrftoken = getCookie('csrftoken');
+            if (csrftoken) opts.headers['X-CSRFToken'] = csrftoken;
+        }
+        await showFetchResult(null, title, fetchUrl, opts);
+        return false;
+    }
+    </script>
 </body>
 </html>
