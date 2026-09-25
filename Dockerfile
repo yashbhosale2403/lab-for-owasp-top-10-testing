@@ -17,4 +17,5 @@ RUN python manage.py migrate --noinput && python manage.py seed_lab_data
 
 EXPOSE 9000
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:9000"]
+# Hosts like Render inject $PORT; fall back to 9000 locally.
+CMD ["sh", "-c", "python manage.py runserver 0.0.0.0:${PORT:-9000}"]

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
 # so the lab has no clickjacking protection -- part of the "missing security
 # headers" scenario DjangoShield's headers detector should catch.
 MIDDLEWARE = [
+    "lab_config.lab_gate.BasicAuthGate",  # no-op unless LAB_AUTH_USER/LAB_AUTH_PASS are set
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
